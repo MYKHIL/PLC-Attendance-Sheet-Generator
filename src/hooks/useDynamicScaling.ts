@@ -13,7 +13,7 @@ export const useDynamicScaling = (staffCount: number, sheetsPerPage: 1 | 2 | 4):
   return useMemo(() => {
     // Base values for 1 sheet per page and ~20 staff
     let baseFontSize = 14;
-    let basePadding = 32; 
+    let basePadding = 24; 
     let baseRowHeight = 48; 
     let baseTitleSize = 30;
     let baseLabelSize = 18;

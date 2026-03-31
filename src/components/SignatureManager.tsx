@@ -1,30 +1,39 @@
 import React, { useState } from 'react';
-import { Upload, PenTool, Camera, Trash2 } from 'lucide-react';
+import { Upload, PenTool, Camera, Trash2, Plus } from 'lucide-react';
 import { SignatureModal } from './SignatureModal';
 
 interface Props {
   teachers: string[];
-  signatures: Record<string, string>;
-  onChange: (signatures: Record<string, string>) => void;
+  signatures: Record<string, string[]>;
+  onChange: (signatures: Record<string, string[]>) => void;
 }
 
 export const SignatureManager: React.FC<Props> = ({ teachers, signatures, onChange }) => {
   const [activeTeacher, setActiveTeacher] = useState<string | null>(null);
 
-  const handleSaveSignature = (signature: string) => {
+  const handleSaveSignature = React.useCallback((signature: string) => {
     if (activeTeacher) {
       onChange({
         ...signatures,
-        [activeTeacher]: signature
+        [activeTeacher]: [...(signatures[activeTeacher] || []), signature]
       });
+    }
+  }, [activeTeacher, signatures, onChange]);
+
+  const removeSignature = (name: string, index: number) => {
+    const newSignatures = { ...signatures };
+    if (Array.isArray(newSignatures[name])) {
+      newSignatures[name] = newSignatures[name].filter((_, i) => i !== index);
+      if (newSignatures[name].length === 0) {
+        delete newSignatures[name];
+      }
+      onChange(newSignatures);
     }
   };
 
-  const removeSignature = (name: string) => {
-    const newSignatures = { ...signatures };
-    delete newSignatures[name];
-    onChange(newSignatures);
-  };
+  const handleClose = React.useCallback(() => {
+    setActiveTeacher(null);
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -37,42 +46,27 @@ export const SignatureManager: React.FC<Props> = ({ teachers, signatures, onChan
           <div key={name} className="p-4 bg-white border border-gray-200 rounded-xl shadow-sm space-y-3">
             <div className="flex justify-between items-start">
               <span className="font-medium text-gray-700">{name}</span>
-              {signatures[name] && (
-                <button
-                  onClick={() => removeSignature(name)}
-                  className="text-gray-400 hover:text-red-500 transition-colors"
-                >
-                  <Trash2 size={16} />
-                </button>
-              )}
             </div>
 
-            <div className="relative group aspect-[3/1] bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
-              {signatures[name] ? (
-                <>
-                  <img src={signatures[name]} alt="Signature" className="max-h-full object-contain" />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <button
-                      onClick={() => setActiveTeacher(name)}
-                      className="p-2 bg-white rounded-full text-gray-700 hover:bg-gray-100 shadow-lg"
-                    >
-                      <PenTool size={16} />
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <button
-                  onClick={() => setActiveTeacher(name)}
-                  className="flex flex-col items-center text-gray-400 hover:text-indigo-500 transition-colors"
-                >
-                  <div className="flex gap-2">
-                    <PenTool size={20} />
-                    <Camera size={20} />
-                    <Upload size={20} />
-                  </div>
-                  <span className="text-xs mt-2 font-medium">Add Signature</span>
-                </button>
-              )}
+            <div className="grid grid-cols-2 gap-2">
+              {(Array.isArray(signatures[name]) ? signatures[name] : []).map((sig, idx) => (
+                <div key={idx} className="relative group aspect-[3/1] bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                  <img src={sig} alt="Signature" className="max-h-full object-contain" />
+                  <button
+                    onClick={() => removeSignature(name, idx)}
+                    className="absolute top-1 right-1 p-1 bg-white/80 rounded-full text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              ))}
+              <button
+                onClick={() => setActiveTeacher(name)}
+                className="aspect-[3/1] bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center text-gray-400 hover:text-indigo-500 hover:border-indigo-300 transition-all"
+              >
+                <Plus size={20} />
+                <span className="text-xs mt-1 font-medium">Add</span>
+              </button>
             </div>
           </div>
         ))}
@@ -88,7 +82,7 @@ export const SignatureManager: React.FC<Props> = ({ teachers, signatures, onChan
         <SignatureModal
           name={activeTeacher}
           isOpen={!!activeTeacher}
-          onClose={() => setActiveTeacher(null)}
+          onClose={handleClose}
           onSave={handleSaveSignature}
         />
       )}

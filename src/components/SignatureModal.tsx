@@ -12,7 +12,7 @@ interface Props {
   onSave: (signature: string) => void;
 }
 
-export const SignatureModal: React.FC<Props> = ({ name, isOpen, onClose, onSave }) => {
+export const SignatureModal: React.FC<Props> = React.memo(({ name, isOpen, onClose, onSave }) => {
   const [mode, setMode] = useState<'draw' | 'camera' | 'upload' | 'crop'>('draw');
   const [penColor, setPenColor] = useState('#0000FF');
   const [isEraser, setIsEraser] = useState(false);
@@ -20,6 +20,7 @@ export const SignatureModal: React.FC<Props> = ({ name, isOpen, onClose, onSave 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   
   // Cropping state
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
@@ -76,11 +77,11 @@ export const SignatureModal: React.FC<Props> = ({ name, isOpen, onClose, onSave 
       stopCamera();
     }
     return () => stopCamera();
-  }, [mode, isOpen]);
+  }, [mode, isOpen, facingMode]);
 
   const startCamera = async () => {
     try {
-      const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+      const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
       setStream(s);
       if (videoRef.current) {
         videoRef.current.srcObject = s;
@@ -90,6 +91,11 @@ export const SignatureModal: React.FC<Props> = ({ name, isOpen, onClose, onSave 
       alert("Could not access camera. Please check permissions.");
       setMode('draw');
     }
+  };
+
+  const toggleCamera = () => {
+    stopCamera();
+    setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
   };
 
   const stopCamera = () => {
@@ -366,6 +372,13 @@ export const SignatureModal: React.FC<Props> = ({ name, isOpen, onClose, onSave 
             <div className="w-full h-full bg-black relative">
               <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
               <canvas ref={canvasRef} className="hidden" />
+              <button 
+                onClick={toggleCamera}
+                className="absolute top-4 left-4 p-3 bg-white/20 backdrop-blur-sm rounded-full text-white hover:bg-white/40 transition-all"
+                title="Switch Camera"
+              >
+                <RefreshCw size={24} />
+              </button>
             </div>
           )}
 
@@ -572,4 +585,4 @@ export const SignatureModal: React.FC<Props> = ({ name, isOpen, onClose, onSave 
       </div>
     </div>
   );
-};
+});

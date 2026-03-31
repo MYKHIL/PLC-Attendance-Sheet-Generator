@@ -8,7 +8,7 @@ interface Props {
   term: string;
   venue: string;
   week: MeetingWeek;
-  signatures: Record<string, string>;
+  signatures: Record<string, string[]>;
   sheetsPerPage: 1 | 2 | 4;
 }
 
@@ -70,31 +70,38 @@ export const PLCSheet: React.FC<Props> = ({ header, subheader, term, venue, week
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-gray-50" style={{ height: '60px' }}>
-              <th className="border border-gray-800 p-4 text-left uppercase font-bold" style={{ width: '40px', fontSize: scaling.fontSize }}>S/N</th>
-              <th className="border border-gray-800 p-4 text-left uppercase font-bold" style={{ fontSize: scaling.fontSize }}>Staff Name</th>
-              <th className="border border-gray-800 p-4 text-left uppercase font-bold" style={{ width: '30%', fontSize: scaling.fontSize }}>Signature</th>
+              <th className="border border-gray-800 py-4 text-left uppercase font-bold" style={{ width: '40px', fontSize: scaling.fontSize, paddingLeft: '20px', paddingRight: '20px' }}>S/N</th>
+              <th className="border border-gray-800 py-4 text-left uppercase font-bold" style={{ fontSize: scaling.fontSize, paddingLeft: '20px', paddingRight: '20px' }}>Staff Name</th>
+              <th className="border border-gray-800 py-4 text-left uppercase font-bold" style={{ width: '30%', fontSize: scaling.fontSize, paddingLeft: '20px', paddingRight: '20px' }}>Signature</th>
             </tr>
           </thead>
           <tbody>
-            {(week.shuffledTeachers || []).map((name, idx) => (
-              <tr key={idx}>
-                <td className="border border-gray-800 p-2 font-mono whitespace-nowrap text-center" style={{ fontSize: scaling.fontSize }}>
-                  {String(idx + 1).padStart(2, '0')}
-                </td>
-                <td className="border border-gray-800 p-2 font-medium" style={{ fontSize: scaling.fontSize }}>
-                  {name}
-                </td>
-                <td className="border border-gray-800 p-0 relative" style={{ height: scaling.rowHeight }}>
-                  {signatures[name] && (
-                    <img 
-                      src={signatures[name]} 
-                      alt="Sig" 
-                      className="absolute inset-0 w-full h-full object-contain p-1"
-                    />
-                  )}
-                </td>
-              </tr>
-            ))}
+            {(week.shuffledTeachers || []).map((name, idx) => {
+              const teacherSigs = signatures[name] || [];
+              const selectedSig = teacherSigs.length > 0 
+                ? teacherSigs[week.weekNum % teacherSigs.length] 
+                : null;
+              
+              return (
+                <tr key={idx}>
+                  <td className="border border-gray-800 py-2 font-mono whitespace-nowrap text-center" style={{ fontSize: scaling.fontSize, paddingLeft: '10px', paddingRight: '10px' }}>
+                    {String(idx + 1).padStart(2, '0')}
+                  </td>
+                  <td className="border border-gray-800 py-2 font-medium" style={{ fontSize: scaling.fontSize, paddingLeft: '20px', paddingRight: '20px' }}>
+                    {name}
+                  </td>
+                  <td className="border border-gray-800 p-1 flex items-center justify-center" style={{ height: scaling.rowHeight }}>
+                    {selectedSig && (
+                      <img 
+                        src={selectedSig} 
+                        alt="Sig" 
+                        className="max-h-full max-w-full object-scale-down"
+                      />
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

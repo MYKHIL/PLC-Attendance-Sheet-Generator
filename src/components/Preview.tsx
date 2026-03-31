@@ -208,7 +208,7 @@ export const Preview: React.FC<Props> = ({ state, onLayoutChange }) => {
                       <div className="absolute inset-0 bg-white/60 z-5 pointer-events-none" />
                     )}
                     {/* Selection Overlay */}
-                    <div className="absolute top-4 right-4 z-10 transition-opacity">
+                    <div className="absolute top-4 right-4 z-10 transition-opacity no-export">
                       <button
                         onClick={() => toggleWeek(week.weekNum)}
                         className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all border-2 ${

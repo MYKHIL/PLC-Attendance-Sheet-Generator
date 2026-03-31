@@ -13,7 +13,7 @@ export interface PLCState {
   reopeningDate: string;
   teachers: string[];
   weeksData: MeetingWeek[];
-  signatures: Record<string, string>; // name -> base64
+  signatures: Record<string, string[]>; // name -> base64[]
   sheetsPerPage: 1 | 2 | 4;
   teachersRaw: string;
   weekCount: string;

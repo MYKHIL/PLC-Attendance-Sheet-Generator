@@ -20,7 +20,8 @@ export const exportToPDF = async (elementIds: string | string[], fileName: strin
       scale: 4,
       useCORS: true,
       logging: false,
-      backgroundColor: '#ffffff'
+      backgroundColor: '#ffffff',
+      ignoreElements: (element) => element.classList.contains('no-export')
     });
 
     const imgData = canvas.toDataURL('image/png');
@@ -62,7 +63,8 @@ export const exportIndividualPDFs = async (elements: { id: string, name: string 
       scale: 4,
       useCORS: true,
       logging: false,
-      backgroundColor: '#ffffff'
+      backgroundColor: '#ffffff',
+      ignoreElements: (element) => element.classList.contains('no-export')
     });
 
     const imgData = canvas.toDataURL('image/png');
