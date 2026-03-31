@@ -1,0 +1,5 @@
+{
+  "name": "PLC Meeting Sheet Generator",
+  "description": "A professional tool for generating modular PLC meeting sheets with automated scheduling, topic rotation, and signature management.",
+  "requestFramePermissions": ["camera"]
+}
