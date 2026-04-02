@@ -1,6 +1,7 @@
 import React from 'react';
 import { MeetingWeek } from '../types';
 import { useDynamicScaling } from '../hooks/useDynamicScaling';
+import { formatDisplayDate } from '../utils/logicUtils';
 
 interface Props {
   header: string;
@@ -56,11 +57,10 @@ export const PLCSheet: React.FC<Props> = ({ header, subheader, term, venue, week
         <div className="flex gap-8 whitespace-nowrap">
           <div className="flex items-baseline gap-4">
             <span className="font-bold uppercase" style={{ fontSize: scaling.fontSize }}>Date:</span>
-            <span style={{ fontSize: scaling.fontSize }}>{week.date}</span>
+            <span style={{ fontSize: scaling.fontSize }}>{week.date ? formatDisplayDate(week.date) : ''}</span>
           </div>
           <div className="flex items-baseline gap-4">
-            <span className="font-bold uppercase" style={{ fontSize: scaling.fontSize }}>Week:</span>
-            <span style={{ fontSize: scaling.fontSize }}>{week.weekNum}</span>
+            <span style={{ fontSize: scaling.fontSize }}>Week {week.weekNum}</span>
           </div>
         </div>
       </div>

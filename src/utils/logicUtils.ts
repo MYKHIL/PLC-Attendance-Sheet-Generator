@@ -10,6 +10,11 @@ export const getWednesdayOfWeek = (dateString: string): Date => {
 };
 
 export const formatDate = (date: Date): string => {
+  return date.toISOString().split('T')[0];
+};
+
+export const formatDisplayDate = (dateString: string): string => {
+  const date = new Date(dateString);
   return date.toLocaleDateString('en-GB', {
     day: '2-digit',
     month: '2-digit',

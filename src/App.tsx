@@ -11,7 +11,8 @@ import {
   ChevronLeft,
   FileJson,
   Plus,
-  Trash2
+  Trash2,
+  Edit2
 } from 'lucide-react';
 import { usePLCState } from './hooks/usePLCState';
 import { SignatureManager } from './components/SignatureManager';
@@ -20,9 +21,16 @@ import { Preview } from './components/Preview';
 import { Step } from './types';
 
 export default function App() {
-  const { state, updateState, generateSchedule, exportState, importState, addTeacher, removeTeacher } = usePLCState();
+  const { state, updateState, generateSchedule, exportState, importState, addTeacher, removeTeacher, updateTeacher } = usePLCState();
   const [currentStep, setCurrentStep] = React.useState<Step>('identity');
   const [newTeacherName, setNewTeacherName] = React.useState('');
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [editingTeacher, setEditingTeacher] = React.useState<{ index: number; name: string } | null>(null);
+  const [deletingTeacher, setDeletingTeacher] = React.useState<{ index: number; name: string } | null>(null);
+
+  const filteredTeachers = state.teachers
+    .map((name, index) => ({ name, originalIdx: index }))
+    .filter(t => t.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
   const handleAddTeacher = (e: React.FormEvent) => {
     e.preventDefault();
@@ -189,6 +197,16 @@ export default function App() {
                       <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">{state.teachers.length} Staff Members</span>
                     </div>
                     
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-4 pr-4 py-3 bg-white border border-gray-200 rounded-xl outline-none transition-all font-medium"
+                        placeholder="Search staff members..."
+                      />
+                    </div>
+
                     <form onSubmit={handleAddTeacher} className="flex gap-2">
                       <div className="relative flex-grow">
                         <Users className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -211,27 +229,48 @@ export default function App() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[300px] overflow-y-auto p-1">
                       <AnimatePresence>
-                        {state.teachers.map((name, idx) => (
+                        {filteredTeachers.map(({ name, originalIdx }) => {
+                          return (
                           <motion.div
-                            key={`${name}-${idx}`}
+                            key={`${name}-${originalIdx}`}
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.9 }}
-                            className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl shadow-sm group hover:border-indigo-200 transition-all"
+                            onClick={() => {
+                              const element = document.getElementById(`sig-card-${name}`);
+                              if (element) {
+                                element.scrollIntoView({ behavior: 'smooth' });
+                              }
+                            }}
+                            className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl shadow-sm group hover:border-indigo-200 transition-all cursor-pointer"
                           >
                             <span className="font-medium text-gray-700 truncate">{name}</span>
-                            <button
-                              onClick={() => removeTeacher(idx)}
-                              className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                            >
-                              <Trash2 size={16} />
-                            </button>
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingTeacher({ index: originalIdx, name });
+                                }}
+                                className="p-1.5 text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 rounded-lg transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeletingTeacher({ index: originalIdx, name });
+                                }}
+                                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
                           </motion.div>
-                        ))}
+                        )})}
                       </AnimatePresence>
-                      {state.teachers.length === 0 && (
+                      {filteredTeachers.length === 0 && (
                         <div className="col-span-full py-8 text-center text-gray-400 border-2 border-dashed border-gray-100 rounded-2xl">
-                          No staff members added yet.
+                          {state.teachers.length === 0 ? 'No staff members added yet.' : 'No staff members match your search.'}
                         </div>
                       )}
                     </div>
@@ -242,6 +281,7 @@ export default function App() {
                   teachers={state.teachers}
                   signatures={state.signatures}
                   onChange={(signatures) => updateState({ signatures })} 
+                  searchTerm={searchTerm}
                 />
               </div>
             )}
@@ -301,6 +341,63 @@ export default function App() {
           &copy; 2026 PLC Meeting Sheet System &bull; Professional Edition
         </p>
       </footer>
+
+      {deletingTeacher && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Remove Teacher</h3>
+            <p className="text-gray-600 mb-6">Are you sure you want to remove {deletingTeacher.name}? This action cannot be undone.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeletingTeacher(null)}
+                className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  removeTeacher(deletingTeacher.index);
+                  setDeletingTeacher(null);
+                }}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editingTeacher && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Edit Teacher Name</h3>
+            <input
+              type="text"
+              value={editingTeacher.name}
+              onChange={(e) => setEditingTeacher({ ...editingTeacher, name: e.target.value })}
+              className="w-full p-3 border border-gray-200 rounded-xl mb-6 focus:ring-2 focus:ring-indigo-500 outline-none"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => setEditingTeacher(null)}
+                className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  updateTeacher(editingTeacher.index, editingTeacher.name);
+                  setEditingTeacher(null);
+                }}
+                className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

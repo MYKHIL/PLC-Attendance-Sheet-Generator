@@ -26,7 +26,10 @@ export const usePLCState = () => {
           ...INITIAL_STATE,
           ...parsed,
           teachers: Array.isArray(parsed.teachers) ? parsed.teachers : INITIAL_STATE.teachers,
-          weeksData: Array.isArray(parsed.weeksData) ? parsed.weeksData : INITIAL_STATE.weeksData,
+          weeksData: Array.isArray(parsed.weeksData) ? parsed.weeksData.map((w: any) => ({
+            ...w,
+            date: w.date.includes('/') ? new Date(w.date.split('/').reverse().join('-')).toISOString().split('T')[0] : w.date
+          })) : INITIAL_STATE.weeksData,
           signatures: parsed.signatures || INITIAL_STATE.signatures,
         };
       } catch (e) {
@@ -88,7 +91,7 @@ export const usePLCState = () => {
   const addTeacher = (name: string) => {
     if (!name.trim()) return;
     updateState({
-      teachers: [...state.teachers, name.trim()]
+      teachers: [name.trim(), ...state.teachers]
     });
   };
 
@@ -106,5 +109,22 @@ export const usePLCState = () => {
     });
   };
 
-  return { state, updateState, generateSchedule, exportState, importState, addTeacher, removeTeacher };
+  const updateTeacher = (index: number, newName: string) => {
+    const oldName = state.teachers[index];
+    const newTeachers = [...state.teachers];
+    newTeachers[index] = newName.trim();
+
+    const newSignatures = { ...state.signatures };
+    if (newSignatures[oldName]) {
+      newSignatures[newName] = newSignatures[oldName];
+      delete newSignatures[oldName];
+    }
+
+    updateState({
+      teachers: newTeachers,
+      signatures: newSignatures
+    });
+  };
+
+  return { state, updateState, generateSchedule, exportState, importState, addTeacher, removeTeacher, updateTeacher };
 };

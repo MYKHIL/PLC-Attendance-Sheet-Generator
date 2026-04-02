@@ -6,19 +6,28 @@ interface Props {
   teachers: string[];
   signatures: Record<string, string[]>;
   onChange: (signatures: Record<string, string[]>) => void;
+  searchTerm: string;
 }
 
-export const SignatureManager: React.FC<Props> = ({ teachers, signatures, onChange }) => {
+export const SignatureManager: React.FC<Props> = ({ teachers, signatures, onChange, searchTerm }) => {
   const [activeTeacher, setActiveTeacher] = useState<string | null>(null);
+  const [editIndex, setEditIndex] = useState<number | null>(null);
 
   const handleSaveSignature = React.useCallback((signature: string) => {
     if (activeTeacher) {
-      onChange({
-        ...signatures,
-        [activeTeacher]: [...(signatures[activeTeacher] || []), signature]
-      });
+      const newSignatures = { ...signatures };
+      if (editIndex !== null) {
+        // Edit existing
+        newSignatures[activeTeacher][editIndex] = signature;
+      } else {
+        // Add new
+        newSignatures[activeTeacher] = [...(newSignatures[activeTeacher] || []), signature];
+      }
+      onChange(newSignatures);
     }
-  }, [activeTeacher, signatures, onChange]);
+    setEditIndex(null);
+    setActiveTeacher(null);
+  }, [activeTeacher, editIndex, signatures, onChange]);
 
   const removeSignature = (name: string, index: number) => {
     const newSignatures = { ...signatures };
@@ -31,8 +40,11 @@ export const SignatureManager: React.FC<Props> = ({ teachers, signatures, onChan
     }
   };
 
+  const filteredTeachers = teachers.filter(t => t.toLowerCase().includes(searchTerm.toLowerCase()));
+
   const handleClose = React.useCallback(() => {
     setActiveTeacher(null);
+    setEditIndex(null);
   }, []);
 
   return (
@@ -42,8 +54,8 @@ export const SignatureManager: React.FC<Props> = ({ teachers, signatures, onChan
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {(teachers || []).map((name) => (
-          <div key={name} className="p-4 bg-white border border-gray-200 rounded-xl shadow-sm space-y-3">
+        {(filteredTeachers || []).map((name) => (
+          <div key={name} id={`sig-card-${name}`} className="p-4 bg-white border border-gray-200 rounded-xl shadow-sm space-y-3">
             <div className="flex justify-between items-start">
               <span className="font-medium text-gray-700">{name}</span>
             </div>
@@ -52,16 +64,30 @@ export const SignatureManager: React.FC<Props> = ({ teachers, signatures, onChan
               {(Array.isArray(signatures[name]) ? signatures[name] : []).map((sig, idx) => (
                 <div key={idx} className="relative group aspect-[3/1] bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
                   <img src={sig} alt="Signature" className="max-h-full object-contain" />
-                  <button
-                    onClick={() => removeSignature(name, idx)}
-                    className="absolute top-1 right-1 p-1 bg-white/80 rounded-full text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <Trash2 size={12} />
-                  </button>
+                  <div className="absolute top-1 right-1 flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => {
+                        setEditIndex(idx);
+                        setActiveTeacher(name);
+                      }}
+                      className="p-1 bg-white/80 rounded-full text-gray-400 hover:text-indigo-500"
+                    >
+                      <PenTool size={12} />
+                    </button>
+                    <button
+                      onClick={() => removeSignature(name, idx)}
+                      className="p-1 bg-white/80 rounded-full text-gray-400 hover:text-red-500"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
                 </div>
               ))}
               <button
-                onClick={() => setActiveTeacher(name)}
+                onClick={() => {
+                  setEditIndex(null);
+                  setActiveTeacher(name);
+                }}
                 className="aspect-[3/1] bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center text-gray-400 hover:text-indigo-500 hover:border-indigo-300 transition-all"
               >
                 <Plus size={20} />
@@ -84,6 +110,7 @@ export const SignatureManager: React.FC<Props> = ({ teachers, signatures, onChan
           isOpen={!!activeTeacher}
           onClose={handleClose}
           onSave={handleSaveSignature}
+          initialSignature={editIndex !== null ? signatures[activeTeacher]?.[editIndex] : undefined}
         />
       )}
     </div>
